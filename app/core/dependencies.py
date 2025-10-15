@@ -3,7 +3,7 @@ from typing import Annotated, Optional
 import httpx
 from fastapi import Request, Depends, HTTPException, status, Security
 from fastapi.security import APIKeyHeader
-from app.service import GatewayService
+from app.service.gateway.gateway_service import GatewayService
 from app.core import get_settings
 
 API_KEY_HEADER_SCHEME = APIKeyHeader(name="X-API-KEY", auto_error=False)
