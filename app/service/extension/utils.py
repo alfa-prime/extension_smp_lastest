@@ -2,7 +2,8 @@ import asyncio
 from datetime import datetime, timedelta
 from typing import Any, Awaitable, Tuple
 
-from app.core import get_settings, logger
+from app.core import get_settings
+from app.core.logger_setup import logger
 from app.mapper import (bed_profile_correction_rules, bed_profiles,
                         department_codes, disease_outcome_ids,
                         medical_care_profile,

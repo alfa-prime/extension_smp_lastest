@@ -6,7 +6,8 @@ from typing import Any, Awaitable, Callable, Dict, ParamSpec, Type, TypeVar
 import httpx
 from fastapi import HTTPException, Request, status
 
-from app.core import get_settings, logger
+from app.core import get_settings
+from app.core.logger_setup import logger
 from app.core.notifier import send_telegram_alert
 
 settings = get_settings()

@@ -2,7 +2,7 @@ import re
 from datetime import datetime
 from typing import Any
 
-from app.core import logger
+from app.core.logger_setup import logger
 from app.service.extension.sanitaizer import (
     filter_operations_from_services, sanitize_additional_diagnosis_entry)
 from app.service.gateway.gateway_service import GatewayService

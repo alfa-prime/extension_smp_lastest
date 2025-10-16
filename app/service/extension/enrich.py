@@ -1,6 +1,7 @@
-from app.core import get_settings, logger
+from app.core import get_settings
+from app.core.logger_setup import logger
 from app.model import EnrichmentRequestData
-from app.service import GatewayService
+from app.service.gateway.gateway_service import GatewayService
 from app.service.extension.request import (
     fetch_and_process_additional_diagnosis, fetch_disease_data,
     fetch_movement_data, fetch_operations_data,

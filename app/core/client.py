@@ -1,7 +1,7 @@
 import httpx
 from fastapi import FastAPI
 
-from app.core import logger
+from app.core.logger_setup import logger
 
 from .config import get_settings
 
