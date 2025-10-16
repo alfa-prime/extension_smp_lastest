@@ -32,3 +32,13 @@ bash-prod:
 # --- Common ---
 clean:
 	docker system prune -a --volumes -f
+
+lint:
+	ruff check .
+	black --check .
+	isort --check-only .
+
+format:
+	ruff check --fix .
+	black .
+	isort .

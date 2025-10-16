@@ -1,36 +1,29 @@
-import json
-
-from app.core import logger, get_settings
+from app.core import get_settings, logger
 from app.model import EnrichmentRequestData
 from app.service import GatewayService
-from app.service.extension.utils import (
-    safe_gather,
-    get_referred_organization,
-    get_department_name,
-    get_department_code,
-    get_bed_profile_code,
-    get_medical_care_profile,
-    get_direction_date,
-    get_medical_care_condition,
-    get_medical_care_form,
-    get_outcome_code,
-    get_disease_type_code,
-)
 from app.service.extension.request import (
-    fetch_person_data,
-    fetch_movement_data,
-    fetch_referral_data,
-    fetch_operations_data,
-    fetch_patient_discharge_summary,
-    fetch_and_process_additional_diagnosis,
-    fetch_disease_data,
-)
+    fetch_and_process_additional_diagnosis, fetch_disease_data,
+    fetch_movement_data, fetch_operations_data,
+    fetch_patient_discharge_summary, fetch_person_data, fetch_referral_data)
+from app.service.extension.utils import (get_bed_profile_code,
+                                         get_department_code,
+                                         get_department_name,
+                                         get_direction_date,
+                                         get_disease_type_code,
+                                         get_medical_care_condition,
+                                         get_medical_care_form,
+                                         get_medical_care_profile,
+                                         get_outcome_code,
+                                         get_referred_organization,
+                                         safe_gather)
 
 settings = get_settings()
 
 
-async def enrich_data(enrich_request: EnrichmentRequestData, gateway_service: GatewayService):
-    logger.info(f"Запрос на обогащение получен.")
+async def enrich_data(
+    enrich_request: EnrichmentRequestData, gateway_service: GatewayService
+):
+    logger.info("Запрос на обогащение получен.")
     started_data = enrich_request.started_data
     person_id = started_data.get("Person_id")
     event_id = started_data.get("EvnPS_id")
@@ -42,9 +35,14 @@ async def enrich_data(enrich_request: EnrichmentRequestData, gateway_service: Ga
         fetch_referral_data(event_id, gateway_service),
         fetch_operations_data(event_id, gateway_service),
         fetch_patient_discharge_summary(event_id, gateway_service),
-
     )
-    person_data, movement_data, referred_data, medical_service_data, discharge_summary = results
+    (
+        person_data,
+        movement_data,
+        referred_data,
+        medical_service_data,
+        discharge_summary,
+    ) = results
 
     person_data = person_data or {}
     movement_data = movement_data or {}
@@ -57,15 +55,23 @@ async def enrich_data(enrich_request: EnrichmentRequestData, gateway_service: Ga
     if medical_service_data:
         pure_discharge_summary["item_145"] = None
 
-    valid_additional_diagnosis = await fetch_and_process_additional_diagnosis(referred_data, gateway_service)
-    referred_organization = await get_referred_organization(referred_data, gateway_service)
+    valid_additional_diagnosis = await fetch_and_process_additional_diagnosis(
+        referred_data, gateway_service
+    )
+    referred_organization = await get_referred_organization(
+        referred_data, gateway_service
+    )
     disease_data = await fetch_disease_data(movement_data, gateway_service)
 
     department_name = await get_department_name(started_data)
     department_code = await get_department_code(department_name)
 
-    bed_profile_code, corrected_bed_profile_name = await get_bed_profile_code(movement_data, department_name)
-    medical_care_profile = await get_medical_care_profile(movement_data, corrected_bed_profile_name)
+    bed_profile_code, corrected_bed_profile_name = await get_bed_profile_code(
+        movement_data, department_name
+    )
+    medical_care_profile = await get_medical_care_profile(
+        movement_data, corrected_bed_profile_name
+    )
 
     polis_number = person_data.get("Person_EdNum", "")
     person_birthday = started_data.get("Person_Birthday", "")
@@ -96,8 +102,10 @@ async def enrich_data(enrich_request: EnrichmentRequestData, gateway_service: Ga
 
     if direction_number and direction_number.isdigit():
         if len(direction_number) >= 11:
-            direction_number = (f"{direction_number[:2]}.{direction_number[2:6]}."
-                                f"{direction_number[6:11]}.{direction_number[11:]}")
+            direction_number = (
+                f"{direction_number[:2]}.{direction_number[2:6]}."
+                f"{direction_number[6:11]}.{direction_number[11:]}"
+            )
 
     disease_type_code = await get_disease_type_code(disease_data)
 

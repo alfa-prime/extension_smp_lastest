@@ -1,18 +1,13 @@
-from typing import Any, Awaitable, Tuple
 import asyncio
 from datetime import datetime, timedelta
+from typing import Any, Awaitable, Tuple
 
-from app.core import logger, get_settings
+from app.core import get_settings, logger
+from app.mapper import (bed_profile_correction_rules, bed_profiles,
+                        department_codes, disease_outcome_ids,
+                        medical_care_profile,
+                        medical_care_profile_correction_rules, medical_orgs)
 from app.service.extension.request import fetch_referred_org_by_id
-from app.mapper import (
-    medical_orgs,
-    department_codes,
-    bed_profile_correction_rules,
-    bed_profiles,
-    medical_care_profile_correction_rules,
-    medical_care_profile,
-    disease_outcome_ids,
-)
 from app.service.gateway.gateway_service import GatewayService
 
 settings = get_settings()
@@ -36,7 +31,9 @@ async def safe_gather(*tasks: Awaitable[Any]) -> list[Any | None]:
 
     for i, result in enumerate(results):
         if isinstance(result, Exception):
-            logger.exception(f"Задача #{i + 1} завершилась с ошибкой: {type(result).__name__} — {result}")
+            logger.exception(
+                f"Задача #{i + 1} завершилась с ошибкой: {type(result).__name__} — {result}"
+            )
             clean_results.append(None)
         else:
             clean_results.append(result)
@@ -44,7 +41,9 @@ async def safe_gather(*tasks: Awaitable[Any]) -> list[Any | None]:
     return clean_results
 
 
-async def get_referred_organization(data: dict, gateway_service: GatewayService) -> str | None:
+async def get_referred_organization(
+    data: dict, gateway_service: GatewayService
+) -> str | None:
     """
     Определяет организацию направившую пациента на госпитализацию, если она указана
     """
@@ -68,7 +67,9 @@ async def get_referred_organization(data: dict, gateway_service: GatewayService)
 
         org_data = medical_orgs.get(org_name)
         if not org_data:
-            logger.warning(f"Организация '{org_name}' не найдена в справочнике организаций")
+            logger.warning(
+                f"Организация '{org_name}' не найдена в справочнике организаций"
+            )
             return None
 
         return org_data.get("registry_code")
@@ -120,7 +121,9 @@ async def get_department_code(department_name: str) -> str | None:
     return code
 
 
-async def get_bed_profile_code(movement_data: dict, department_name: str) -> Tuple[str | None, str | None]:
+async def get_bed_profile_code(
+    movement_data: dict, department_name: str
+) -> Tuple[str | None, str | None]:
     """
     Возвращает кортеж (код профиля койки, итоговое название профиля койки).
     """
@@ -128,7 +131,9 @@ async def get_bed_profile_code(movement_data: dict, department_name: str) -> Tup
     diag_code = movement_data.get("Diag_Code", "")
 
     if not bed_profile_name:
-        logger.warning(f"Не найден профиль койки для person_id: {movement_data.get('Person_id')},")
+        logger.warning(
+            f"Не найден профиль койки для person_id: {movement_data.get('Person_id')},"
+        )
         return None, None
 
     # При необходимости корректируем название профиля койки в соответствии
@@ -153,17 +158,23 @@ async def get_bed_profile_code(movement_data: dict, department_name: str) -> Tup
         logger.warning(f"Не найден код профиля койки для: {bed_profile_name}")
         return None, bed_profile_name
 
-    logger.debug(f"Определяем код профиля койки: {bed_profile_name}, код: {bed_profile_id}")
+    logger.debug(
+        f"Определяем код профиля койки: {bed_profile_name}, код: {bed_profile_id}"
+    )
     return str(bed_profile_id), bed_profile_name
 
 
-async def get_medical_care_profile(data: dict, corrected_bed_profile_name: str | None = None) -> str | None:
+async def get_medical_care_profile(
+    data: dict, corrected_bed_profile_name: str | None = None
+) -> str | None:
     """
     Определяет код профиля оказания медицинской помощи.
     Сначала проверяет, есть ли правило коррекции на основе профиля койки.
     """
     if corrected_bed_profile_name:
-        target_profile_key = medical_care_profile_correction_rules.get(corrected_bed_profile_name)
+        target_profile_key = medical_care_profile_correction_rules.get(
+            corrected_bed_profile_name
+        )
         if target_profile_key:
             logger.info(
                 f"Применяется правило коррекции: профиль койки '{corrected_bed_profile_name}' "
@@ -178,7 +189,7 @@ async def get_medical_care_profile(data: dict, corrected_bed_profile_name: str |
                     f"отсутствует или некорректен в справочнике medical_care_profile."
                 )
 
-    raw_name = data.get('LpuSectionProfile_Name')
+    raw_name = data.get("LpuSectionProfile_Name")
     if not raw_name:
         logger.warning("Профиль медицинской помощи не указан.")
         return None
@@ -224,8 +235,12 @@ async def get_medical_care_condition(lpu_section_name: str) -> str:
     """
     inpatient_care = "1"
     day_hospital_care = "2"
-    logger.debug(f"Определяем условия оказания медицинской помощи. Отделение: {lpu_section_name}")
-    return day_hospital_care if lpu_section_name == "Дневной стационар" else inpatient_care
+    logger.debug(
+        f"Определяем условия оказания медицинской помощи. Отделение: {lpu_section_name}"
+    )
+    return (
+        day_hospital_care if lpu_section_name == "Дневной стационар" else inpatient_care
+    )
 
 
 async def get_medical_care_form(data: dict) -> str | None:
@@ -235,13 +250,15 @@ async def get_medical_care_form(data: dict) -> str | None:
     scheduled_hospitalization_code = "3"
     emergency_hospitalization_code = "1"
 
-    raw_medical_care_form_id = data.get('PrehospType_id')
+    raw_medical_care_form_id = data.get("PrehospType_id")
     if raw_medical_care_form_id is None:
         logger.warning("Не найден PrehospDirect_id в данных")
         return None
 
     medical_care_form_id = str(raw_medical_care_form_id)
-    logger.debug(f"Определяем код формы медицинской помощи. evmias_id: {medical_care_form_id}")
+    logger.debug(
+        f"Определяем код формы медицинской помощи. evmias_id: {medical_care_form_id}"
+    )
 
     match medical_care_form_id:
         case "2":
@@ -260,11 +277,15 @@ async def get_outcome_code(disease_data: dict) -> str | None:
     outcome_entry = disease_outcome_ids.get(outcome_code_evmias)
 
     if not outcome_entry:
-        logger.warning(f"Не найден исход заболевания для evmias_id: {outcome_code_evmias}")
+        logger.warning(
+            f"Не найден исход заболевания для evmias_id: {outcome_code_evmias}"
+        )
         return None
 
     outcome_code = outcome_entry.get("code")
-    logger.debug(f"Определяем код исхода лечения: evmias_id {outcome_code_evmias}, код: {outcome_code}")
+    logger.debug(
+        f"Определяем код исхода лечения: evmias_id {outcome_code_evmias}, код: {outcome_code}"
+    )
     return outcome_code
 
 
@@ -277,7 +298,9 @@ async def get_disease_type_code(disease_data: dict) -> str | None:
     known_chronic = "3"  # ранее установленное хроническое заболевание
 
     disease_type_code = disease_data.get("DeseaseType_id")
-    logger.debug(f"Определяем код характера основного заболевания. evmias_id: {disease_type_code}")
+    logger.debug(
+        f"Определяем код характера основного заболевания. evmias_id: {disease_type_code}"
+    )
 
     if disease_type_code:
         match disease_type_code:

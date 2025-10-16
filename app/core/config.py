@@ -1,4 +1,6 @@
 from functools import lru_cache
+from typing import Optional
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -21,6 +23,13 @@ class Settings(BaseSettings):
     SEARCH_LPU_BUILDING_CID: str
 
     MEDICAL_CARE_TYPE_CODE: str
+
+    DEBUG_MODE: bool
+    DEBUG_HTTP: bool
+    LOGS_LEVEL: str
+
+    TELEGRAM_BOT_TOKEN: Optional[str] = None
+    TELEGRAM_CHAT_ID: Optional[str] = None
 
     model_config = SettingsConfigDict(
         env_file=".env",

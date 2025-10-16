@@ -1,8 +1,4 @@
+from .extension import EnrichmentRequestData, ExtensionStartedData
 from .gateway_request import GatewayRequest
-from .extension import ExtensionStartedData, EnrichmentRequestData
 
-__all__ = [
-    "GatewayRequest",
-    "ExtensionStartedData",
-    "EnrichmentRequestData"
-]
+__all__ = ["GatewayRequest", "ExtensionStartedData", "EnrichmentRequestData"]

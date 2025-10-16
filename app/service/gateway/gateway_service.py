@@ -1,7 +1,7 @@
 import httpx
-from fastapi import HTTPException
 
-from app.core import get_settings, logger
+from app.core import get_settings
+from app.core.decorators import log_and_catch
 
 settings = get_settings()
 
@@ -12,24 +12,17 @@ class GatewayService:
     def __init__(self, client: httpx.AsyncClient):
         self._client = client
 
+    @log_and_catch()
     async def make_request(self, method: str, **kwargs) -> dict:
-        try:
-            if not hasattr(self._client, method.lower()):
-                raise ValueError(f"Неподдерживаемый HTTP метод: {method}")
+        if not hasattr(self._client, method.lower()):
+            raise ValueError(f"Неподдерживаемый HTTP метод: {method}")
 
-            http_method_func = getattr(self._client, method.lower())
+        http_method_func = getattr(self._client, method.lower())
 
-            response = await http_method_func(self.GATEWAY_ENDPOINT, **kwargs)
+        # kwargs для декоратора должны содержать 'method' и 'url' для красивого логирования
+        response = await http_method_func(url=self.GATEWAY_ENDPOINT, **kwargs)
 
-            response.raise_for_status()
-            return response.json() if response.content else {}
+        # httpx.HTTPStatusError будет пойман декоратором, так что try...except не нужен
+        response.raise_for_status()
 
-        except ValueError as exc:
-            logger.exception(f"Внутренняя ошибка сервиса: {exc}")
-            raise HTTPException(status_code=500, detail=str(exc))
-        except httpx.RequestError as exc:
-            logger.exception(f"Не удалось подключиться к шлюзу: {exc}")
-            raise HTTPException(status_code=503, detail=f"Не удалось подключиться к шлюзу: {exc}")
-        except httpx.HTTPStatusError as exc:
-            logger.exception(f"Ошибка от шлюза: {exc.response.text}")
-            raise HTTPException(status_code=exc.response.status_code, detail=f"Ошибка от шлюза: {exc.response.text}")
+        return response.json() if response.content else {}

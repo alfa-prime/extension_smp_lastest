@@ -3,29 +3,31 @@ from datetime import datetime
 from typing import Any
 
 from app.core import logger
+from app.service.extension.sanitaizer import (
+    filter_operations_from_services, sanitize_additional_diagnosis_entry)
 from app.service.gateway.gateway_service import GatewayService
-from app.service.extension.sanitaizer import filter_operations_from_services, sanitize_additional_diagnosis_entry
 
 
 async def fetch_person_data(person_id: str, gateway_service: GatewayService) -> dict:
     # Получает основные данные о пациенте по его ID.
     payload = {
         "params": {"c": "Common", "m": "loadPersonData"},
-        "data": {"Person_id": person_id, "LoadShort": True, "mode": "PersonInfoPanel"}
+        "data": {"Person_id": person_id, "LoadShort": True, "mode": "PersonInfoPanel"},
     }
 
-    response = await gateway_service.make_request(method='post', json=payload)
+    response = await gateway_service.make_request(method="post", json=payload)
     return response[0] if isinstance(response, list) and response else {}
 
 
-async def fetch_movement_data(event_id: str, gateway_service: GatewayService) -> dict: \
-        # Получает данные о движении пациента в рамках случая госпитализации.
+async def fetch_movement_data(
+    event_id: str, gateway_service: GatewayService
+) -> dict:  # Получает данные о движении пациента в рамках случая госпитализации.
     payload = {
         "params": {"c": "EvnSection", "m": "loadEvnSectionGrid"},
-        "data": {"EvnSection_pid": event_id}
+        "data": {"EvnSection_pid": event_id},
     }
 
-    response = await gateway_service.make_request(method='post', json=payload)
+    response = await gateway_service.make_request(method="post", json=payload)
     return response[0] if isinstance(response, list) and response else {}
 
 
@@ -38,32 +40,39 @@ async def fetch_referral_data(event_id: str, gateway_service: GatewayService) ->
             "archiveRecord": "0",
             "delDocsView": "0",
             "attrObjects": [{"object": "EvnPSEditWindow", "identField": "EvnPS_id"}],
-        }
+        },
     }
-    response = await gateway_service.make_request(method='post', json=payload)
+    response = await gateway_service.make_request(method="post", json=payload)
     return response[0] if isinstance(response, list) and response else {}
 
 
 # ============== Начало - Получаем только операции (если они есть) из списка оказанных услуг ==============
 
-async def _fetch_all_medical_services(event_id: str, gateway_service: GatewayService) -> list[dict[str, str]]:
+
+async def _fetch_all_medical_services(
+    event_id: str, gateway_service: GatewayService
+) -> list[dict[str, str]]:
     """
     Получает список ВСЕХ оказанных услуг в рамках случая госпитализации.
     """
     payload = {
         "params": {"c": "EvnUsluga", "m": "loadEvnUslugaGrid"},
-        "data": {"pid": event_id, "parent": "EvnPS"}
+        "data": {"pid": event_id, "parent": "EvnPS"},
     }
-    services = await gateway_service.make_request(method='post', json=payload)
+    services = await gateway_service.make_request(method="post", json=payload)
 
     if not isinstance(services, list):
-        logger.warning(f"event_id: {event_id}, API услуг вернул не список: {type(services)}")
+        logger.warning(
+            f"event_id: {event_id}, API услуг вернул не список: {type(services)}"
+        )
         return []
 
     return services
 
 
-async def fetch_operations_data(event_id: str, gateway_service: GatewayService) -> list[dict[str, str]]:
+async def fetch_operations_data(
+    event_id: str, gateway_service: GatewayService
+) -> list[dict[str, str]]:
     """
     Находит и возвращает список операций среди всех услуг,
     оказанных пациенту в рамках госпитализации, если их нет возвращается пустой список.
@@ -85,14 +94,15 @@ async def fetch_operations_data(event_id: str, gateway_service: GatewayService) 
 
 # ============== Старт - Получаем выписной эпикриз из ЕВМИАС ============================================
 
+
 def _clean_html(raw_html):
     """Удаляет HTML-теги, лишние пробелы и переносы строк."""
     if not raw_html:
         return ""
     # Удаляем все HTML-теги
-    text = re.sub(r'<.*?>', ' ', raw_html)
+    text = re.sub(r"<.*?>", " ", raw_html)
     # Заменяем множественные пробелы и переносы строк на один пробел
-    text = re.sub(r'\s+', ' ', text)
+    text = re.sub(r"\s+", " ", text)
     return text.strip()
 
 
@@ -103,17 +113,21 @@ def _combine_parts(*args):
     return " ".join(valid_parts) if valid_parts else None
 
 
-async def fetch_patient_discharge_summary(event_id: str, gateway_service: GatewayService) -> dict[str, Any] | None:
+async def fetch_patient_discharge_summary(
+    event_id: str, gateway_service: GatewayService
+) -> dict[str, Any] | None:
     # Выполняет многоступенчатый процесс получения и обработки данных из выписного эпикриза.
-    logger.info(f"Начинаем получать данные из выписного эпикриза для event_id: {event_id}")
+    logger.info(
+        f"Начинаем получать данные из выписного эпикриза для event_id: {event_id}"
+    )
 
     # ===== Шаг 1. Получаем id раздела события для запроса списка медицинских записей =====================
     payload = {
         "params": {"c": "EvnSection", "m": "loadEvnSectionGrid"},
-        "data": {"EvnSection_pid": event_id}
+        "data": {"EvnSection_pid": event_id},
     }
 
-    section_data = await gateway_service.make_request(method='post', json=payload)
+    section_data = await gateway_service.make_request(method="post", json=payload)
 
     if section_data and isinstance(section_data, list):
         event_section_id = section_data[0].get("EvnSection_id", "")
@@ -121,53 +135,78 @@ async def fetch_patient_discharge_summary(event_id: str, gateway_service: Gatewa
         event_section_id = None
 
     if not event_section_id:
-        logger.warning(f"Не удалось получить EvnSection_id для event_id: {event_id}. Поиск эпикриза прерван.")
+        logger.warning(
+            f"Не удалось получить EvnSection_id для event_id: {event_id}. Поиск эпикриза прерван."
+        )
         return None
     logger.debug(f"Шаг 1/5: Получен EvnSection_id: {event_section_id}")
 
     # ===== Шаг 2. Получаем список медицинских записей пациента в рамках госпитализации =====================
     payload = {
-        "params": {"c": "EvnXml6E", "m": "loadStacEvnXmlList", "_dc": datetime.now().timestamp()},
-        "data": {"Evn_id": event_section_id}
+        "params": {
+            "c": "EvnXml6E",
+            "m": "loadStacEvnXmlList",
+            "_dc": datetime.now().timestamp(),
+        },
+        "data": {"Evn_id": event_section_id},
     }
-    medical_records = await gateway_service.make_request(method='post', json=payload)
+    medical_records = await gateway_service.make_request(method="post", json=payload)
 
     if not isinstance(medical_records, list):
-        logger.warning(f"API вернул не список медицинских записей: {type(medical_records)}. Поиск эпикриза прерван.")
+        logger.warning(
+            f"API вернул не список медицинских записей: {type(medical_records)}. Поиск эпикриза прерван."
+        )
         return None
     logger.debug(f"Шаг 2/5: Получено {len(medical_records)} медицинских записей")
 
     # ===== Шаг 3. Получаем из списка медицинских записей непосредственно сам выписной эпикриз =====================
     discharge_summary_entry = None
     for entry in medical_records:
-        if (entry.get("XmlType_Name") == "Эпикриз") and (entry.get("XmlTypeKind_Name") == "Выписной"):
+        if (entry.get("XmlType_Name") == "Эпикриз") and (
+            entry.get("XmlTypeKind_Name") == "Выписной"
+        ):
             discharge_summary_entry = entry
             break
 
     if not discharge_summary_entry:
-        logger.info(f"Не удалось найти выписной эпикриз для event_id: {event_id} среди {len(medical_records)} записей.")
+        logger.info(
+            f"Не удалось найти выписной эпикриз для event_id: {event_id} среди {len(medical_records)} записей."
+        )
         return None
     logger.debug("Шаг 3/5: Найден выписной эпикриз")
 
     # ===== Шаг 4. Получаем 'сырые' данные выписного эпикриза =====================
     payload = {
-        "params": {"c": "XmlTemplate6E", "m": "getXmlTemplateForEvnXml", "_dc": datetime.now().timestamp()},
+        "params": {
+            "c": "XmlTemplate6E",
+            "m": "getXmlTemplateForEvnXml",
+            "_dc": datetime.now().timestamp(),
+        },
         "data": {
             "Evn_id": discharge_summary_entry.get("EvnXml_pid", ""),
             "EvnXml_id": discharge_summary_entry.get("EMDRegistry_ObjectID", ""),
-        }
+        },
     }
 
     if not all(payload["data"].values()):
-        logger.warning(f"В записи эпикриза отсутствуют необходимые id: {payload['data']}. Поиск эпикриза прерван.")
+        logger.warning(
+            f"В записи эпикриза отсутствуют необходимые id: {payload['data']}. Поиск эпикриза прерван."
+        )
         return None
 
-    raw_discharge_summary_data = await gateway_service.make_request(method='post', json=payload)
+    raw_discharge_summary_data = await gateway_service.make_request(
+        method="post", json=payload
+    )
 
-    if not isinstance(raw_discharge_summary_data, dict) or "xmlData" not in raw_discharge_summary_data:
-        logger.warning(f"Получены некорректные сырые данные для эпикриза: {raw_discharge_summary_data}.")
+    if (
+        not isinstance(raw_discharge_summary_data, dict)
+        or "xmlData" not in raw_discharge_summary_data
+    ):
+        logger.warning(
+            f"Получены некорректные сырые данные для эпикриза: {raw_discharge_summary_data}."
+        )
         return None
-    logger.debug(f"Шаг 4/5: Получены сырые данные для выписного эпикриза.")
+    logger.debug("Шаг 4/5: Получены сырые данные для выписного эпикриза.")
 
     # ===== Шаг 5. Извлекаем и структурируем необходимые данные по выписному эпикризу =====================
     xml_data = raw_discharge_summary_data.get("xmlData", {})
@@ -191,7 +230,7 @@ async def fetch_patient_discharge_summary(event_id: str, gateway_service: Gatewa
         r"@#@КодОсновногоДиагнозаДвижения",
         r"Состояние при поступлении:",
         r"основного: ",
-        r"@#@НаименованиеОсновногоДиагнозаДвижения"
+        r"@#@НаименованиеОсновногоДиагнозаДвижения",
     ]
     # Объединяем все стоп-заголовки в один паттерн для поиска конца блока
     STOP_PATTERN = r"(?:" + "|".join(STOP_LABELS) + r")"  # noqa
@@ -214,31 +253,44 @@ async def fetch_patient_discharge_summary(event_id: str, gateway_service: Gatewa
     marker_pattern = r"@#@([\w\d]+)@#@"
 
     # Обработка основного диагноза
-    primary_text = _clean_html(re.sub(marker_pattern, '', raw_primary))
-    primary_markers = [xml_data.get(marker_name) for marker_name in re.findall(marker_pattern, raw_primary)]
+    primary_text = _clean_html(re.sub(marker_pattern, "", raw_primary))
+    primary_markers = [
+        xml_data.get(marker_name)
+        for marker_name in re.findall(marker_pattern, raw_primary)
+    ]
     primary_diagnosis = _combine_parts(primary_text, *primary_markers)
 
     # Обработка осложнений
-    complication_text = _clean_html(re.sub(marker_pattern, '', raw_complication))
-    complication_markers = [xml_data.get(marker_name) for marker_name in re.findall(marker_pattern, raw_complication)]
+    complication_text = _clean_html(re.sub(marker_pattern, "", raw_complication))
+    complication_markers = [
+        xml_data.get(marker_name)
+        for marker_name in re.findall(marker_pattern, raw_complication)
+    ]
     primary_complication = _combine_parts(complication_text, *complication_markers)
     if primary_complication:
-        primary_complication = primary_complication.replace('Сахарный диабет', '<b>Сахарный диабет</b>')
+        primary_complication = primary_complication.replace(
+            "Сахарный диабет", "<b>Сахарный диабет</b>"
+        )
 
     # Обработка сопутствующих
-    concomitant_text = _clean_html(re.sub(marker_pattern, '', raw_concomitant))
-    concomitant_markers = [xml_data.get(marker_name) for marker_name in re.findall(marker_pattern, raw_concomitant)]
+    concomitant_text = _clean_html(re.sub(marker_pattern, "", raw_concomitant))
+    concomitant_markers = [
+        xml_data.get(marker_name)
+        for marker_name in re.findall(marker_pattern, raw_concomitant)
+    ]
     concomitant_diseases = _combine_parts(concomitant_text, *concomitant_markers)
     if concomitant_diseases:
-        concomitant_diseases = concomitant_diseases.replace('Сахарный диабет', '<b>Сахарный диабет</b>')
+        concomitant_diseases = concomitant_diseases.replace(
+            "Сахарный диабет", "<b>Сахарный диабет</b>"
+        )
 
     diagnos = xml_data.get("diagnos")
     if diagnos:
-        diagnos = diagnos.replace('Сахарный диабет', '<b>Сахарный диабет</b>')
+        diagnos = diagnos.replace("Сахарный диабет", "<b>Сахарный диабет</b>")
 
     item_659 = xml_data.get("specMarker_659")
     if item_659:
-        item_659 = item_659.replace('Сахарный диабет', '<b>Сахарный диабет</b>')
+        item_659 = item_659.replace("Сахарный диабет", "<b>Сахарный диабет</b>")
 
     result = {
         "pure": {
@@ -263,17 +315,20 @@ async def fetch_patient_discharge_summary(event_id: str, gateway_service: Gatewa
 
 # ============== Конец - Получаем выписной эпикриз из ЕВМИАС ============================================
 
+
 # ============== Начало - Получаем дополнительные диагнозы (если они есть) из движения в ЕВМИАС ==========
-async def _fetch_raw_diagnosis_list(diagnosis_id: str, gateway_service: GatewayService) -> list[dict[str, str]]:
+async def _fetch_raw_diagnosis_list(
+    diagnosis_id: str, gateway_service: GatewayService
+) -> list[dict[str, str]]:
     """
     Получает "сырой" список диагнозов от API.
     """
     payload = {
         "params": {"c": "EvnDiag", "m": "loadEvnDiagPSGrid"},
-        "data": {"class": "EvnDiagPSSect", "EvnDiagPS_pid": diagnosis_id}
+        "data": {"class": "EvnDiagPSSect", "EvnDiagPS_pid": diagnosis_id},
     }
 
-    diagnosis_list = await gateway_service.make_request(method='post', json=payload)
+    diagnosis_list = await gateway_service.make_request(method="post", json=payload)
 
     if not isinstance(diagnosis_list, list):
         logger.warning(
@@ -283,7 +338,9 @@ async def _fetch_raw_diagnosis_list(diagnosis_id: str, gateway_service: GatewayS
     return diagnosis_list
 
 
-def _process_diagnosis_list(diagnosis_list: list[dict[str, Any]]) -> list[dict[str, str]]:
+def _process_diagnosis_list(
+    diagnosis_list: list[dict[str, Any]],
+) -> list[dict[str, str]]:
     """
     Обрабатывает "сырой" список диагнозов, очищая каждый элемент.
     Использует list comprehension для краткости и эффективности.
@@ -301,7 +358,9 @@ def _process_diagnosis_list(diagnosis_list: list[dict[str, Any]]) -> list[dict[s
     ]
 
 
-async def _fetch_additional_diagnosis(diagnosis_id: str, gateway_service: GatewayService) -> list[dict[str, str]]:
+async def _fetch_additional_diagnosis(
+    diagnosis_id: str, gateway_service: GatewayService
+) -> list[dict[str, str]]:
     """
     Получает список дополнительных диагнозов из движения в ЕВМИАС, если они есть,
     и возвращает их в виде списка словарей.
@@ -347,48 +406,59 @@ async def _get_valid_additional_diagnosis(data: list) -> list[dict[str, str | An
         diagnosis_name = entry.get("name")
 
         if isinstance(diagnosis_code, str) and diagnosis_pattern.match(diagnosis_code):
-            valid_diagnosis.append({'code': diagnosis_code, 'name': diagnosis_name})
+            valid_diagnosis.append({"code": diagnosis_code, "name": diagnosis_name})
 
     return valid_diagnosis
 
 
 async def fetch_and_process_additional_diagnosis(
-        referred_data: dict[str, Any] | None,
-        gateway_service: GatewayService
+    referred_data: dict[str, Any] | None, gateway_service: GatewayService
 ) -> list[dict[str, str]]:
     """
     Получает и фильтрует дополнительные диагнозы по МКБ E10/E11 (сахарный диабет)..
     """
     if not referred_data:
-        logger.info("Нет данных о направлении (referred_data), пропускаем запрос доп. диагнозов.")
+        logger.info(
+            "Нет данных о направлении (referred_data), пропускаем запрос доп. диагнозов."
+        )
         return []
 
     evn_section_id = referred_data.get("ChildEvnSection_id")
     if not evn_section_id:
-        logger.warning("В данных о направлении отсутствует ChildEvnSection_id, невозможно получить доп. диагнозы.")
+        logger.warning(
+            "В данных о направлении отсутствует ChildEvnSection_id, невозможно получить доп. диагнозы."
+        )
         return []
 
-    logger.debug(f"Запрашиваем дополнительные диагнозы для evn_section_id: {evn_section_id}")
-    additional_diagnosis_data = await _fetch_additional_diagnosis(evn_section_id, gateway_service)
+    logger.debug(
+        f"Запрашиваем дополнительные диагнозы для evn_section_id: {evn_section_id}"
+    )
+    additional_diagnosis_data = await _fetch_additional_diagnosis(
+        evn_section_id, gateway_service
+    )
 
-    valid_additional_diagnosis = await _get_valid_additional_diagnosis(additional_diagnosis_data)
-    logger.info(f"Найдено {len(valid_additional_diagnosis)} валидных доп. диагнозов по фильтру.")
+    valid_additional_diagnosis = await _get_valid_additional_diagnosis(
+        additional_diagnosis_data
+    )
+    logger.info(
+        f"Найдено {len(valid_additional_diagnosis)} валидных доп. диагнозов по фильтру."
+    )
 
     return valid_additional_diagnosis
 
 
 # ============== Конец - Получаем дополнительные диагнозы (если они есть) из движения в ЕВМИАС ==========
 
-async def fetch_referred_org_by_id(org_id: str, gateway_service: GatewayService) -> dict:
+
+async def fetch_referred_org_by_id(
+    org_id: str, gateway_service: GatewayService
+) -> dict:
     """
     Получает информацию о направившей организации по её ID.
     """
-    payload = {
-        "params": {"c": "Org", "m": "getOrgList"},
-        "data": {"Org_id": org_id}
-    }
+    payload = {"params": {"c": "Org", "m": "getOrgList"}, "data": {"Org_id": org_id}}
 
-    response_json = await gateway_service.make_request(method='post', json=payload)
+    response_json = await gateway_service.make_request(method="post", json=payload)
     return response_json[0] if isinstance(response_json, list) and response_json else {}
 
 
@@ -406,10 +476,10 @@ async def fetch_disease_data(data: dict, gateway_service: GatewayService) -> dic
             "attrObjects": [
                 {"object": "EvnSectionEditWindow", "identField": "EvnSection_id"}
             ],
-        }
+        },
     }
 
-    response = await gateway_service.make_request(method='post', json=payload)
+    response = await gateway_service.make_request(method="post", json=payload)
 
     if not isinstance(response, dict):
         return {}

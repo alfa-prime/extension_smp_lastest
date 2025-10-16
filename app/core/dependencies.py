@@ -1,10 +1,11 @@
 from typing import Annotated, Optional
 
 import httpx
-from fastapi import Request, Depends, HTTPException, status, Security
+from fastapi import Depends, HTTPException, Request, Security, status
 from fastapi.security import APIKeyHeader
-from app.service.gateway.gateway_service import GatewayService
+
 from app.core import get_settings
+from app.service.gateway.gateway_service import GatewayService
 
 API_KEY_HEADER_SCHEME = APIKeyHeader(name="X-API-KEY", auto_error=False)
 settings = get_settings()
@@ -14,7 +15,9 @@ async def get_base_http_client(request: Request) -> httpx.AsyncClient:
     return request.app.state.gateway_client
 
 
-async def get_gateway_service(client: Annotated[httpx.AsyncClient, Depends(get_base_http_client)]) -> GatewayService:
+async def get_gateway_service(
+    client: Annotated[httpx.AsyncClient, Depends(get_base_http_client)],
+) -> GatewayService:
     return GatewayService(client=client)
 
 
@@ -27,6 +30,6 @@ async def check_api_key(api_key: Optional[str] = Security(API_KEY_HEADER_SCHEME)
         detail={
             "error": "Authentication Failed",
             "message": "The provided X-API-KEY is missing or invalid.",
-            "remedy": "Please include a valid 'X-API-KEY' header in your request."
+            "remedy": "Please include a valid 'X-API-KEY' header in your request.",
         },
     )

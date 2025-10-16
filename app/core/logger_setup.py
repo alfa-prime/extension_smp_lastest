@@ -3,6 +3,10 @@ import sys
 
 from loguru import logger
 
+from app.core.config import get_settings
+
+settings = get_settings()
+
 
 def configure_logger(log_level: str = "INFO"):
     """Настраивает loguru для логирования приложения. Вызывается при импорте модуля."""
@@ -41,14 +45,17 @@ def configure_logger(log_level: str = "INFO"):
     # Перехват логов FastAPI
     class InterceptHandler(logging.Handler):
         def emit(self, record):
-            level = record.levelname if logger.level(record.levelname) is not None else "INFO"
-            logger.opt(depth=6, exception=record.exc_info).log(level, record.getMessage())
+            level = (
+                record.levelname
+                if logger.level(record.levelname) is not None
+                else "INFO"
+            )
+            logger.opt(depth=6, exception=record.exc_info).log(
+                level, record.getMessage()
+            )
 
     for name in logging.root.manager.loggerDict:
         logging.getLogger(name).handlers = [InterceptHandler()]
 
 
-from .config import get_settings
-
-settings = get_settings()
 configure_logger(settings.LOGS_LEVEL)

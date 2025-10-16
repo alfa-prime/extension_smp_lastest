@@ -13,5 +13,5 @@ __all__ = [
     "bed_profiles",
     "bed_profile_correction_rules",
     "medical_care_profile",
-    "medical_care_profile_correction_rules"
+    "medical_care_profile_correction_rules",
 ]
