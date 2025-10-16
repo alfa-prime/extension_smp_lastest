@@ -2,12 +2,12 @@ from typing import Annotated, Any, Dict
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.core import get_gateway_service, get_settings, logger, route_handler
+from app.core import get_gateway_service, get_settings, logger, route_handler, check_api_key
 from app.model import EnrichmentRequestData, ExtensionStartedData
 from app.service import GatewayService, enrich_data, fetch_started_data
 
 settings = get_settings()
-router = APIRouter(prefix="/extension", tags=["Расширение"])
+router = APIRouter(prefix="/extension", tags=["Расширение"], dependencies=[Depends(check_api_key)])
 
 
 @router.post(
@@ -17,8 +17,8 @@ router = APIRouter(prefix="/extension", tags=["Расширение"])
 )
 @route_handler(debug=True)
 async def search_patients_hospitals(
-    patient: ExtensionStartedData,
-    gateway_service: Annotated[GatewayService, Depends(get_gateway_service)],
+        patient: ExtensionStartedData,
+        gateway_service: Annotated[GatewayService, Depends(get_gateway_service)],
 ):
     logger.info("Запрос на поиск пациентов")
     result = await fetch_started_data(patient, gateway_service)
@@ -38,8 +38,8 @@ async def search_patients_hospitals(
 )
 @route_handler(debug=True)
 async def enrich_started_data_for_front(
-    enrich_request: EnrichmentRequestData,
-    gateway_service: Annotated[GatewayService, Depends(get_gateway_service)],
+        enrich_request: EnrichmentRequestData,
+        gateway_service: Annotated[GatewayService, Depends(get_gateway_service)],
 ) -> Dict[str, Any]:
     logger.info("Обащение данных для фронта")
     result = await enrich_data(enrich_request, gateway_service)
