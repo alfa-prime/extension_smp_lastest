@@ -2,12 +2,12 @@ from typing import Annotated, Any, Dict
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.core import get_gateway_service, get_settings, logger, route_handler, check_api_key
+from app.core import get_gateway_service, get_settings, logger, route_handler
 from app.model import EnrichmentRequestData, ExtensionStartedData
 from app.service import GatewayService, enrich_data, fetch_started_data
 
 settings = get_settings()
-router = APIRouter(prefix="/extension", tags=["Расширение"], dependencies=[Depends(check_api_key)])
+router = APIRouter(prefix="/extension", tags=["Расширение"])
 
 
 @router.post(
