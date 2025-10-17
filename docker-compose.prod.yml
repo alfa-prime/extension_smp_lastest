@@ -12,3 +12,11 @@ services:
     volumes:
       - ./app:/code/app
       - ./logs:/code/logs
+    networks:
+      - default # Оставляем default для возможных будущих сервисов в этом проекте
+      - monitor-net
+networks:
+  monitor-net:
+    external: true
+  default:
+    driver: bridge
