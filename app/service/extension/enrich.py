@@ -1,4 +1,4 @@
-from typing import re
+import re
 
 from app.core import get_settings
 from app.core.logger_setup import logger
