@@ -1,12 +1,12 @@
 // browser-extension/js/apiService.js
 
-//const API_SEARCH_URL = "http://192.168.0.249:8780/extension/search";
-//const API_ENRICH_URL = "http://192.168.0.249:8780/extension/enrich-data";
+const API_SEARCH_URL = "http://192.168.0.249:8780/extension/search";
+const API_ENRICH_URL = "http://192.168.0.249:8780/extension/enrich-data";
 
 
 //
-const API_SEARCH_URL = "http://0.0.0.0:8000/extension/search";
-const API_ENRICH_URL = "http://0.0.0.0:8000/extension/enrich-data";
+//const API_SEARCH_URL = "http://0.0.0.0:8000/extension/search";
+//const API_ENRICH_URL = "http://0.0.0.0:8000/extension/enrich-data";
 
 /**
  * Вспомогательная функция для обработки ответа API.

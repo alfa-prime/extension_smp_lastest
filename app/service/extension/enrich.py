@@ -1,3 +1,5 @@
+from typing import re
+
 from app.core import get_settings
 from app.core.logger_setup import logger
 from app.model import EnrichmentRequestData
@@ -95,6 +97,19 @@ async def enrich_data(
         outcome_code = "102"
 
     diag_code = movement_data.get("Diag_Code", "")
+
+    # todo: это костыль, в дальнейшем может быть отдельная функция?
+    # меняем профиль медицинской помощи на 'Оториноларингология' код: 20
+    # при диагнозах J34.x
+    if re.compile(r"^J34\.\d$").match(diag_code):
+        medical_care_profile = '20'
+
+    # меняем профиль медицинской помощи на 'Колопроктология' код: 14
+    # при диагнозах K60.x - K64.x
+    if re.compile(re.compile(r"^K6[0-4]\.\d$")).match(diag_code):
+        medical_care_profile = '14'
+
+
     card_number = started_data.get("EvnPS_NumCard", "").split(" ")[0]
     treatment_outcome_code = movement_data.get("LeaveType_Code")
 

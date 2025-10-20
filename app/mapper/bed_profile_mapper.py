@@ -32,7 +32,7 @@ bed_profile_correction_rules = {
         },
     ],
     "Хирургическое отделение №1": [
-        {"pattern": re.compile(r"^K6[0-3]\.\d$"), "replacement": "проктологические"},
+        {"pattern": re.compile(r"^K6[0-4]\.\d$"), "replacement": "проктологические"},
         {
             "pattern": re.compile(r"^(K4[0-6]\.\d|K80\.1)$"),
             "replacement": "абдоминальной хирургии",
@@ -51,7 +51,7 @@ bed_profile_correction_rules = {
         },
     ],
     "Хирургическое отделение №2": [
-        {"pattern": re.compile(r"^K6[0-3]\.\d$"), "replacement": "проктологические"},
+        {"pattern": re.compile(r"^K6[0-4]\.\d$"), "replacement": "проктологические"},
         {
             "pattern": re.compile(r"^(K4[0-6]\.\d|K80\.1)$"),
             "replacement": "абдоминальной хирургии",
