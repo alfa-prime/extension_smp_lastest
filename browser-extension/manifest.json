@@ -18,8 +18,8 @@
     "default_popup": "index.html",
     "default_state": "disabled",
     "default_icon": {
-      "16": "images/icon48.png",
-      "32": "images/icon48.png",
+      "16": "images/icon16.png",
+      "32": "images/icon32.png",
       "48": "images/icon48.png"
     }
   },

@@ -8,7 +8,6 @@ from app.core import get_settings, init_gateway_client, shutdown_gateway_client
 from app.route import router as api_router
 
 
-
 settings = get_settings()
 tags_metadata = []
 
