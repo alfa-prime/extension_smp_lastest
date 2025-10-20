@@ -1,12 +1,10 @@
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile.prod
-    container_name: ${PROD_CONTAINER_NAME}
-    restart: always
     env_file:
       - .env
+    image: docker-hub.omnissiah-codex.internal/extension-vmp:latest
+    container_name:
+      - ${PROD_CONTAINER_NAME}
     ports:
       - "${PROD_PORT}:8000"
     volumes:
@@ -15,6 +13,23 @@ services:
     networks:
       - default # Оставляем default для возможных будущих сервисов в этом проекте
       - monitor-net
+#  app:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile.prod
+#    container_name: ${PROD_CONTAINER_NAME}
+#    restart: always
+#    env_file:
+#      - .env
+#    ports:
+#      - "${PROD_PORT}:8000"
+#    volumes:
+#      - ./app:/code/app
+#      - ./logs:/code/logs
+#    networks:
+#      - default # Оставляем default для возможных будущих сервисов в этом проекте
+#      - monitor-net
+
 networks:
   monitor-net:
     external: true
