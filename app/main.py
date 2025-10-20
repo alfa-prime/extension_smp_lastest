@@ -24,7 +24,7 @@ app = FastAPI(
     title="АПИ для браузерного расширения ЕВМИАС -> ОМС",
     description="[ВМП] АПИ для сбора данных из ЕВМИАС и заполнения формы ГИС ОМС.",
     lifespan=lifespan,
-    version="0.2.1"
+    version="0.2.2"
 )
 
 instrumentator = Instrumentator()
