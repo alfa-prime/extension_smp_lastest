@@ -113,20 +113,11 @@ async def enrich_data(
     card_number = started_data.get("EvnPS_NumCard", "").split(" ")[0]
     treatment_outcome_code = movement_data.get("LeaveType_Code")
 
-    # номер направления
-    direction_number = referred_data.get("EvnDirection_Num", "")
-
-    if direction_number and direction_number.isdigit():
-        if len(direction_number) >= 11:
-            direction_number = (
-                f"{direction_number[:2]}.{direction_number[2:6]}."
-                f"{direction_number[6:11]}.{direction_number[11:]}"
-            )
 
     disease_type_code = await get_disease_type_code(disease_data)
 
     enriched_data = {
-        "input[name='ReferralHospitalizationNumberTicket']": direction_number,
+        "input[name='ReferralHospitalizationNumberTicket']": "б/н",
         "input[name='ReferralHospitalizationDateTicket']": direction_date,
         "input[name='ReferralHospitalizationMedIndications']": "001",
         "input[name='Enp']": polis_number,
