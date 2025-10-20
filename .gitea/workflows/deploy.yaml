@@ -29,4 +29,4 @@ jobs:
       - run: docker push ${{ env.CONTAINER_NAME }}:latest
       - run: docker push ${{ env.CONTAINER_NAME }}:${{env.VERSION_TAG}}
 
-      - run: docker compose -f docker-compose.prod.yml up --build -d
+      - run: docker-compose -f docker-compose.prod.yml up --build -d
