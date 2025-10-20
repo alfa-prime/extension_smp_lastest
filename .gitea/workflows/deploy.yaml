@@ -28,3 +28,4 @@ jobs:
       - run: docker images -a
       - run: docker push ${{ env.CONTAINER_NAME }}:latest
       - run: docker push ${{ env.CONTAINER_NAME }}:${{env.VERSION_TAG}}
+
