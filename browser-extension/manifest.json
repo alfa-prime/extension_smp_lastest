@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "[ВМП] ЕВМИАС -> ОМС",
+  "name": "[CМП] ЕВМИАС -> ОМС {gateway}",
   "version": "1.0",
   "description": "Находит данные по ФИО и вставляет их в форму.",
   "permissions": ["scripting", "activeTab", "tabs", "windows", "storage"],
@@ -14,7 +14,7 @@
     "type": "module"
   },
   "action": {
-    "default_title": "[ВМП] ЕВМИАС -> ОМС",
+    "default_title": "[CМП] ЕВМИАС -> ОМС {gateway}",
     "default_popup": "index.html",
     "default_state": "disabled",
     "default_icon": {
