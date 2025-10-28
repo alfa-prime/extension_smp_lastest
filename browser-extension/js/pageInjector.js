@@ -11,6 +11,7 @@ export async function injectionTargetFunction(enrichedDataForForm) {
   };
 
   const FIELD_COMPLEXITY_MAP = {
+    "HospitalizationInfoAddressDepartment": "ca305397-7d4b-4305-92ac-fe47595f6e25",
     "ReferralHospitalizationSendingDepartment": WAIT_PROFILES.SLOW,
     "HospitalizationInfoDiagnosisMainDisease": WAIT_PROFILES.DEFAULT,
     "HospitalizationInfoSubdivision": WAIT_PROFILES.DEFAULT,
@@ -187,7 +188,29 @@ export async function injectionTargetFunction(enrichedDataForForm) {
   let executionError = null;
   try {
     const fillTasks = [
-      { type: 'ref', name: 'ReferralHospitalizationMedIndications', column: 'Код' }, { type: 'ref', name: 'VidMpV008', column: 'Код' }, { type: 'ref', name: 'HospitalizationInfoV006', column: 'Код' }, { type: 'ref', name: 'HospitalizationInfoV014', column: 'Код' }, { type: 'ref', name: 'HospitalizationInfoSubdivision', column: 'Краткое наименование' }, { type: 'ref', name: 'HospitalizationInfoSpecializedMedicalProfile', column: 'Код' }, { type: 'ref', name: 'HospitalizationInfoV020', column: 'Код' }, { type: 'ref', name: 'HospitalizationInfoC_ZABV027', column: 'Код' }, { type: 'ref', name: 'ResultV009', column: 'Код' }, { type: 'ref', name: 'IshodV012', column: 'Код' }, { type: 'ref', name: 'HospitalizationInfoDiagnosisMainDisease', column: 'Код МКБ' }, { type: 'ref', name: 'ReferralHospitalizationSendingDepartment', column: 'Реестровый номер' }, { type: 'date', name: 'ReferralHospitalizationDateTicket' }, { type: 'date', name: 'DateBirth' }, { type: 'date', name: 'TreatmentDateStart' }, { type: 'date', name: 'TreatmentDateEnd' }, { type: 'dropdown', name: 'Gender' }, { type: 'plain', name: 'ReferralHospitalizationNumberTicket' }, { type: 'plain', name: 'Enp' }, { type: 'plain', name: 'HospitalizationInfoNameDepartment' }, { type: 'plain', name: 'HospitalizationInfoOfficeCode' }, { type: 'plain', name: 'CardNumber' },
+      { type: 'ref', name: 'ReferralHospitalizationMedIndications', column: 'Код' },
+      { type: 'ref', name: 'HospitalizationInfoAddressDepartment', column: 'Адрес местонахождения'},
+      { type: 'ref', name: 'VidMpV008', column: 'Код' },
+      { type: 'ref', name: 'HospitalizationInfoV006', column: 'Код' },
+      { type: 'ref', name: 'HospitalizationInfoV014', column: 'Код' },
+      { type: 'ref', name: 'HospitalizationInfoSubdivision', column: 'Краткое наименование' },
+      { type: 'ref', name: 'HospitalizationInfoSpecializedMedicalProfile', column: 'Код' },
+      { type: 'ref', name: 'HospitalizationInfoV020', column: 'Код' },
+      { type: 'ref', name: 'HospitalizationInfoC_ZABV027', column: 'Код' },
+      { type: 'ref', name: 'ResultV009', column: 'Код' },
+      { type: 'ref', name: 'IshodV012', column: 'Код' },
+      { type: 'ref', name: 'HospitalizationInfoDiagnosisMainDisease', column: 'Код МКБ' },
+      { type: 'ref', name: 'ReferralHospitalizationSendingDepartment', column: 'Реестровый номер' },
+      { type: 'date', name: 'ReferralHospitalizationDateTicket' },
+      { type: 'date', name: 'DateBirth' },
+      { type: 'date', name: 'TreatmentDateStart' },
+      { type: 'date', name: 'TreatmentDateEnd' },
+      { type: 'dropdown', name: 'Gender' },
+      { type: 'plain', name: 'ReferralHospitalizationNumberTicket' },
+      { type: 'plain', name: 'Enp' },
+      { type: 'plain', name: 'HospitalizationInfoNameDepartment' },
+      { type: 'plain', name: 'HospitalizationInfoOfficeCode' },
+      { type: 'plain', name: 'CardNumber' },
     ];
 
     for (const task of fillTasks) {

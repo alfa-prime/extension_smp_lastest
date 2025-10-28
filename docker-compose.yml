@@ -16,11 +16,11 @@ services:
     # 2. ПОДКЛЮЧАЕМ СЕРВИС К ОБЩЕЙ СЕТИ
     networks:
       - default # Оставляем default для возможных будущих сервисов в этом проекте
-      - monitor-net
+#      - monitor-net
 
   # 3. ОБЪЯВЛЯЕМ, ЧТО СЕТЬ 'monitor-net' ЯВЛЯЕТСЯ ВНЕШНЕЙ
 networks:
-  monitor-net:
-    external: true
+#  monitor-net:
+#    external: true
   default:
     driver: bridge

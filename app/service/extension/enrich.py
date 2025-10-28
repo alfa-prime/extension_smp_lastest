@@ -32,6 +32,18 @@ async def enrich_data(
     event_id = started_data.get("EvnPS_id")
     logger.debug(f"Извлечены данные: person_id={person_id}, event_id={event_id}")
 
+    # person_data = await fetch_person_data(person_id, gateway_service)
+    # logger.warning(f"person_data: {person_data}, {type(person_data)})")
+    # movement_data = await fetch_movement_data(event_id, gateway_service)
+    # logger.warning(f"movement_data: {movement_data}, {type(movement_data)})")
+    # referred_data = await fetch_referral_data(event_id, gateway_service)
+    # logger.warning(f"referred_data: {referred_data}, {type(referred_data)})")
+    # medical_service_data = await fetch_operations_data(event_id, gateway_service)
+    # logger.warning(f"medical_service_data: {medical_service_data}, {type(medical_service_data)})")
+    # discharge_summary = await fetch_patient_discharge_summary(event_id, gateway_service)
+    # logger.warning(f"discharge_summary: {discharge_summary}, {type(discharge_summary)})")
+
+
     results = await safe_gather(
         fetch_person_data(person_id, gateway_service),
         fetch_movement_data(event_id, gateway_service),
@@ -142,6 +154,7 @@ async def enrich_data(
         "additional_diagnosis_data": valid_additional_diagnosis,
         "medical_service_data": medical_service_data,
         "discharge_summary": pure_discharge_summary,
+        "input[name='HospitalizationInfoAddressDepartment']": "Павлика Морозова, д. 6",
     }
 
     return enriched_data
