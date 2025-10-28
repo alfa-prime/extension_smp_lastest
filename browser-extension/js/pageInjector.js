@@ -11,7 +11,7 @@ export async function injectionTargetFunction(enrichedDataForForm) {
   };
 
   const FIELD_COMPLEXITY_MAP = {
-    "HospitalizationInfoAddressDepartment": "ca305397-7d4b-4305-92ac-fe47595f6e25",
+    "HospitalizationInfoAddressDepartment": WAIT_PROFILES.DEFAULT,
     "ReferralHospitalizationSendingDepartment": WAIT_PROFILES.SLOW,
     "HospitalizationInfoDiagnosisMainDisease": WAIT_PROFILES.DEFAULT,
     "HospitalizationInfoSubdivision": WAIT_PROFILES.DEFAULT,
